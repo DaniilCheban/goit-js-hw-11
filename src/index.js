@@ -8,6 +8,8 @@ const form = document.querySelector('.search-form');
 const gallery = document.querySelector('.gallery');
 const buttonLoad = document.querySelector('.load-more');
 const input = form.querySelector('input[name="searchQuery"]');
+const scrollUpBtn = document.getElementById('scrollUp');
+const scrollDownBtn = document.getElementById('scrollDown');
 let pages = 1;
 const per_page = 40;
 
@@ -21,6 +23,7 @@ function errorMesage() {
     }
   );
 }
+
 function infoMessage() {
   Notify.info("We're sorry, but you've reached the end of search results.", {
     timeout: 3000,
@@ -28,6 +31,7 @@ function infoMessage() {
     fontSize: '24px',
   });
 }
+
 function successMessage(response) {
   Notify.success(`Hooray! We found ${response.data.totalHits} images.`, {
     timeout: 3000,
@@ -36,17 +40,21 @@ function successMessage(response) {
   });
 }
 
-function showButton() {
-  buttonLoad.style.display = 'block';
+function showButton(button) {
+  button.style.display = 'block';
 }
-function hideButton() {
-  buttonLoad.style.display = 'none';
+
+function hideButton(button) {
+  button.style.display = 'none';
 }
 
 form.addEventListener('submit', fetchPosts);
+
 async function fetchPosts(event) {
   event.preventDefault();
-  hideButton();
+  hideButton(buttonLoad);
+  hideButton(scrollUpBtn);
+  hideButton(scrollDownBtn);
   gallery.innerHTML = '';
   pages = 1;
   try {
@@ -59,7 +67,9 @@ async function fetchPosts(event) {
     }
     successMessage(response);
     renderImage(response);
-    showButton();
+    showButton(buttonLoad);
+    showButton(scrollUpBtn);
+    showButton(scrollDownBtn);
     updateStatusLoadButton(response);
   } catch (error) {
     console.error(error);
@@ -73,7 +83,7 @@ buttonLoad.addEventListener('click', async () => {
     const click = await loadMore();
 
     renderImage(click);
-    showButton();
+    showButton(buttonLoad);
     updateStatusLoadButton(click);
     scrollPage();
   } catch (error) {
@@ -81,8 +91,9 @@ buttonLoad.addEventListener('click', async () => {
     infoMessage();
   }
 });
+
 async function loadMore() {
-  hideButton();
+  hideButton(buttonLoad);
   const response = await axios.get(
     `https://pixabay.com/api/?key=${apiKey}&q=${input.value}&image_type=photo&orientation=horizontal&safesearch=true&per_page=${per_page}&page=${pages}`
   );
@@ -91,11 +102,9 @@ async function loadMore() {
 
 function updateStatusLoadButton(params) {
   const pagesTotal = Math.ceil(params.data.totalHits / per_page);
-  // console.log(pagesTotal);
   if (pages >= pagesTotal || params.data.totalHits <= per_page) {
     infoMessage();
-    hideButton();
-    // return;
+    hideButton(buttonLoad);
   }
 }
 
@@ -125,14 +134,12 @@ function renderImage(dataGet) {
     .join('');
 
   gallery.insertAdjacentHTML('beforeend', markup);
-  // startSimpleLightbox();
   let lightbox = new SimpleLightbox('.gallery__link', {
     captionsData: 'alt',
     captionDelay: 250,
   });
   lightbox.refresh();
 }
-// function startSimpleLightbox() {}
 
 function scrollPage() {
   const { height: cardHeight } = document
@@ -144,9 +151,6 @@ function scrollPage() {
     behavior: 'smooth',
   });
 }
-
-const scrollUpBtn = document.getElementById('scrollUp');
-const scrollDownBtn = document.getElementById('scrollDown');
 
 scrollUpBtn.addEventListener('click', () => {
   window.scrollTo({
